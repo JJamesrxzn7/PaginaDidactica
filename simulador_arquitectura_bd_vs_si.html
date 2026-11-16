@@ -1,0 +1,1296 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Arquitectura de BD vs. Sistemas de Información | Lab Interactivo</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      background-color: #020617;
+      color: #f8fafc;
+      overflow-x: hidden;
+    }
+    .grid-bg {
+      background-size: 28px 28px;
+      background-image: 
+        linear-gradient(to right, rgba(51, 65, 85, 0.16) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(51, 65, 85, 0.16) 1px, transparent 1px);
+    }
+    .glow-blue {
+      box-shadow: 0 0 25px -4px rgba(59, 130, 246, 0.45);
+    }
+    .glow-indigo {
+      box-shadow: 0 0 25px -4px rgba(99, 102, 241, 0.45);
+    }
+    .glow-emerald {
+      box-shadow: 0 0 25px -4px rgba(16, 185, 129, 0.45);
+    }
+    .glow-amber {
+      box-shadow: 0 0 25px -4px rgba(245, 158, 11, 0.45);
+    }
+    .glow-rose {
+      box-shadow: 0 0 25px -4px rgba(244, 63, 94, 0.5);
+    }
+    @keyframes pulse-fast {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.65; transform: scale(0.98); }
+    }
+    .animate-pulse-fast {
+      animation: pulse-fast 1.5s infinite ease-in-out;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col selection:bg-blue-600 selection:text-white">
+
+  <!-- HEADER SUPERIOR -->
+  <header class="border-b border-slate-800/80 bg-slate-950/90 backdrop-blur-md sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-600/20 border border-blue-400/30">
+          <i data-lucide="layers" class="w-6 h-6 text-white"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="px-2 py-0.5 text-[11px] font-mono uppercase tracking-wider bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-md font-semibold">Bases de Datos II • 6to Nivel</span>
+            <span class="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-md">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span> Lab Interactivo
+            </span>
+          </div>
+          <h1 class="text-lg sm:text-xl font-extrabold tracking-tight text-white mt-0.5">
+            Arquitectura de BD vs. Arquitectura de Sistemas de Información
+          </h1>
+        </div>
+      </div>
+
+      <!-- NAVEGACIÓN DE PESTAÑAS -->
+      <nav class="flex flex-wrap gap-1.5 bg-slate-900/90 p-1.5 rounded-xl border border-slate-800" aria-label="Tabs">
+        <button onclick="switchTab('p4')" id="tab-btn-p4" class="tab-btn flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all bg-blue-600 text-white shadow-md">
+          <i data-lucide="network" class="w-4 h-4"></i>
+          <span>P4: Transparencia vs. APIs</span>
+        </button>
+        <button onclick="switchTab('p5')" id="tab-btn-p5" class="tab-btn flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all text-slate-400 hover:text-white hover:bg-slate-800/60">
+          <i data-lucide="git-commit" class="w-4 h-4"></i>
+          <span>P5: Middleware & 2PC</span>
+        </button>
+        <button onclick="switchTab('quiz')" id="tab-btn-quiz" class="tab-btn flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all text-slate-400 hover:text-white hover:bg-slate-800/60">
+          <i data-lucide="terminal" class="w-4 h-4"></i>
+          <span>Reto 6to Nivel + Deploy</span>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- CONTENIDO PRINCIPAL -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+
+    <!-- ==========================================
+         PESTAÑA 1: PREGUNTA 4 (TRANSPARENCIA VS APIS)
+         ========================================== -->
+    <section id="tab-p4" class="space-y-8">
+      
+      <!-- Enunciado Oficial P4 -->
+      <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 sm:p-6 relative overflow-hidden">
+        <div class="absolute top-0 left-0 w-1.5 h-full bg-blue-500"></div>
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
+          <span class="text-xs font-mono uppercase tracking-wider text-blue-400 font-semibold flex items-center gap-1.5">
+            <i data-lucide="help-circle" class="w-4 h-4"></i> Pregunta 4 • Análisis Arquitectónico
+          </span>
+          <span class="text-xs font-mono text-slate-400">Tema: Transparencia y Autonomía en Entornos Distribuidos</span>
+        </div>
+        <p class="text-sm sm:text-base text-slate-300 leading-relaxed">
+          "Un Sistema de Gestión de Bases de Datos Distribuidas (<strong class="text-white">SGBDD</strong>) homogéneo busca ofrecer la ilusión de un sistema único mediante un esquema global que enmascara la fragmentación horizontal/vertical y la ubicación física de las tuplas en múltiples sitios. Analice en qué se diferencia esta <strong class="text-blue-400">transparencia de localización y fragmentación a nivel de motor de base de datos</strong> respecto de la <strong class="text-indigo-400">interoperabilidad y coordinación de servicios mediante APIs web heterogéneas</strong> en la capa superior del sistema de información."
+        </p>
+      </div>
+
+      <!-- Barra de Control del Simulador P4 -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-5 border-b border-slate-800">
+          
+          <!-- Selector de Modo (Capa BD vs Capa SI) -->
+          <div>
+            <span class="text-xs font-mono uppercase text-slate-400 block mb-2">1. Selecciona la Capa Arquitectónica a Simular:</span>
+            <div class="inline-flex rounded-xl bg-slate-950 p-1.5 border border-slate-800 w-full sm:w-auto">
+              <button onclick="setP4Mode('sgbdd')" id="btn-mode-sgbdd" class="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-all bg-blue-600 text-white shadow">
+                <i data-lucide="database" class="w-4 h-4"></i>
+                <span>Motor SGBDD Homogéneo</span>
+              </button>
+              <button onclick="setP4Mode('apis')" id="btn-mode-apis" class="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-all text-slate-400 hover:text-white">
+                <i data-lucide="webhook" class="w-4 h-4"></i>
+                <span>Sistema de Info (APIs Heterogéneas)</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Botón Azul Principal de Avance Paso a Paso -->
+          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            <div class="flex items-center gap-1.5 bg-slate-950 px-3.5 py-2 rounded-xl border border-slate-800 justify-center">
+              <span class="text-xs font-mono text-slate-400">Paso Actual:</span>
+              <span id="p4-step-badge" class="text-sm font-mono font-bold text-blue-400">1 / 4</span>
+            </div>
+
+            <button onclick="nextP4Step()" id="p4-next-btn" class="flex items-center justify-center gap-2.5 px-6 py-3 rounded-xl font-bold text-sm sm:text-base bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white glow-blue transition-all cursor-pointer select-none">
+              <span id="p4-next-btn-text">Siguiente Paso (1/4)</span>
+              <i data-lucide="arrow-right-circle" class="w-5 h-5"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Barra de progreso de 4 pasos clickeables -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 my-5" id="p4-stepper-bars">
+          <!-- Renderizado por JS -->
+        </div>
+
+        <!-- LIENZO INTERACTIVO + EXPLICACIÓN DEL PASO -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-4 items-stretch">
+          
+          <!-- Diagrama Topológico Dinámico (7 columnas) -->
+          <div class="lg:col-span-7 bg-slate-950 grid-bg rounded-2xl border border-slate-800 p-4 sm:p-6 flex flex-col justify-between relative min-h-[390px]">
+            <div class="flex items-center justify-between border-b border-slate-800/80 pb-3 mb-4">
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-blue-500 animate-ping"></span>
+                <span id="p4-diagram-title" class="text-xs sm:text-sm font-mono font-bold text-slate-200 uppercase">TOPOLOGÍA: ESQUEMA GLOBAL SGBDD</span>
+              </div>
+              <span id="p4-protocol-tag" class="px-2.5 py-0.5 text-[11px] font-mono rounded bg-blue-950 text-blue-300 border border-blue-700/50">Protocolo Nativo Binario TCP</span>
+            </div>
+
+            <!-- Contenedor del Gráfico Dinámico -->
+            <div id="p4-canvas" class="my-auto py-2">
+              <!-- Inyectado dinámicamente según Modo y Paso -->
+            </div>
+
+            <!-- Leyenda inferior del diagrama -->
+            <div class="border-t border-slate-800/80 pt-3 mt-4 flex flex-wrap items-center justify-between gap-2 text-[11px] font-mono text-slate-400">
+              <span id="p4-Bottom-Status">Estado: Nodo activo iluminado en el flujo</span>
+              <span>Haz clic en el botón azul para avanzar</span>
+            </div>
+          </div>
+
+          <!-- Tarjeta de Explicación Paso a Paso + Inspector de Código (5 columnas) -->
+          <div class="lg:col-span-5 flex flex-col justify-between bg-slate-950 rounded-2xl border border-slate-800 p-5 space-y-4">
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <span id="p4-step-tag" class="px-2.5 py-1 rounded-md text-xs font-mono font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                  PASO 1 DE 4
+                </span>
+                <span id="p4-layer-pill" class="text-xs font-mono text-slate-400">Nivel: Motor de BD</span>
+              </div>
+
+              <h3 id="p4-step-title" class="text-lg sm:text-xl font-bold text-white mt-2">
+                Consulta SQL sobre Esquema Global
+              </h3>
+              <p id="p4-step-desc" class="text-sm text-slate-300 mt-2.5 leading-relaxed">
+                <!-- Descripción dinámica -->
+              </p>
+
+              <!-- Punto clave didáctico del paso -->
+              <div class="mt-4 p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 flex items-start gap-3">
+                <i data-lucide="lightbulb" class="w-5 h-5 text-amber-400 shrink-0 mt-0.5"></i>
+                <div class="text-xs text-slate-300 leading-relaxed">
+                  <strong class="text-amber-300 block mb-0.5">¿Qué ocurre bajo el capó?</strong>
+                  <span id="p4-step-highlight"></span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Inspector de Código / Payload en Vivo -->
+            <div class="bg-slate-900 rounded-xl border border-slate-800 overflow-hidden">
+              <div class="bg-slate-950 px-3.5 py-2 border-b border-slate-800 flex items-center justify-between">
+                <div class="flex items-center gap-1.5">
+                  <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+                  <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+                  <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                  <span id="p4-code-label" class="ml-2 text-[11px] font-mono text-slate-400">inspector_motor.sql</span>
+                </div>
+                <span class="text-[10px] font-mono text-blue-400 uppercase">Live Trace</span>
+              </div>
+              <pre id="p4-code-box" class="p-3.5 text-xs font-mono text-emerald-300 overflow-x-auto leading-relaxed"></pre>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ==========================================
+           ANÁLISIS CONCEPTUAL SIEMPRE VISIBLE (P4)
+           ========================================== -->
+      <div class="space-y-6">
+        <div class="flex items-center gap-3">
+          <div class="p-2 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-400">
+            <i data-lucide="book-open-check" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h2 class="text-xl font-bold text-white">Análisis Conceptual Completo (Siempre Visible)</h2>
+            <p class="text-xs sm:text-sm text-slate-400">Diferencias estructurales entre la Transparencia en el SGBDD y la Interoperabilidad por APIs en el Sistema de Información</p>
+          </div>
+        </div>
+
+        <!-- Tarjetas de Contraste Directo -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Card SGBDD -->
+          <div class="bg-slate-900/90 border border-blue-500/30 rounded-2xl p-6 space-y-4">
+            <div class="flex items-center justify-between">
+              <span class="px-3 py-1 rounded-full text-xs font-mono font-bold bg-blue-500/15 text-blue-300 border border-blue-500/30">
+                1. Nivel de Motor de BD (SGBDD Homogéneo)
+              </span>
+              <i data-lucide="database" class="w-6 h-6 text-blue-400"></i>
+            </div>
+            <h3 class="text-lg font-bold text-white">Ilusión de Sistema Único (Transparencia Interna)</h3>
+            <p class="text-sm text-slate-300 leading-relaxed">
+              En un SGBDD homogéneo (ej. todos los nodos corren PostgreSQL/Oracle distribuidos), el motor gestiona un <strong>Catálogo o Esquema Global</strong>. El desarrollador o DBA lanza un único <code class="text-blue-300 font-mono">SELECT</code> como si toda la empresa estuviera en un solo servidor local.
+            </p>
+            <ul class="space-y-2.5 text-xs sm:text-sm text-slate-300">
+              <li class="flex items-start gap-2.5">
+                <i data-lucide="check-circle-2" class="w-4 h-4 text-blue-400 shrink-0 mt-1"></i>
+                <span><strong>Transparencia de Fragmentación:</strong> Oculta si una tabla fue dividida horizontalmente por ciudad (<code class="font-mono text-slate-200">CLIENTES_QUITO</code>, <code class="font-mono text-slate-200">CLIENTES_GYE</code>) o verticalmente por columnas sensibles.</span>
+              </li>
+              <li class="flex items-start gap-2.5">
+                <i data-lucide="check-circle-2" class="w-4 h-4 text-blue-400 shrink-0 mt-1"></i>
+                <span><strong>Transparencia de Localización:</strong> El motor resuelve internamente las direcciones IP de los nodos, hace el <code class="font-mono text-slate-200">UNION</code> o <code class="font-mono text-slate-200">JOIN</code> distribuido y optimiza el costo de red sin intervención de la capa de aplicación.</span>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Card APIs SI -->
+          <div class="bg-slate-900/90 border border-indigo-500/30 rounded-2xl p-6 space-y-4">
+            <div class="flex items-center justify-between">
+              <span class="px-3 py-1 rounded-full text-xs font-mono font-bold bg-indigo-500/15 text-indigo-300 border border-indigo-500/30">
+                2. Nivel de Sistema de Información (APIs Web)
+              </span>
+              <i data-lucide="Cpu" class="w-6 h-6 text-indigo-400"></i>
+            </div>
+            <h3 class="text-lg font-bold text-white">Coordinación e Interoperabilidad Explícita</h3>
+            <p class="text-sm text-slate-300 leading-relaxed">
+              En la capa superior del Sistema de Información (Microservicios / SOA), <strong>no existe un esquema global de base de datos</strong>. Cada servicio es dueño exclusivo de su base de datos (políglota: SQL, MongoDB, Redis) y expone contratos mediante APIs REST, GraphQL o gRPC.
+            </p>
+            <ul class="space-y-2.5 text-xs sm:text-sm text-slate-300">
+              <li class="flex items-start gap-2.5">
+                <i data-lucide="check-circle-2" class="w-4 h-4 text-indigo-400 shrink-0 mt-1"></i>
+                <span><strong>Autonomía Total y Heterogeneidad:</strong> El servicio de Facturación puede estar en Python + PostgreSQL y el de Catálogo en Node.js + MongoDB. No comparten tablas ni diccionarios de datos.</span>
+              </li>
+              <li class="flex items-start gap-2.5">
+                <i data-lucide="check-circle-2" class="w-4 h-4 text-indigo-400 shrink-0 mt-1"></i>
+                <span><strong>Composición en Capa de Aplicación:</strong> La integración ("el JOIN") la programa explícitamente el ingeniero en el API Gateway o Backend for Frontend (BFF) consumiendo múltiples endpoints HTTP/JSON y cruzando los objetos en memoria RAM.</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Matriz Comparativa Técnica -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-lg">
+          <div class="px-6 py-4 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
+            <h3 class="text-sm sm:text-base font-bold text-white font-mono">MATRIZ COMPARATIVA: SGBDD HOMOGÉNEO vs. APIS HETEROGÉNEAS (SI)</h3>
+            <span class="text-xs font-mono text-slate-400">Síntesis Pregunta 4</span>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-xs sm:text-sm">
+              <thead>
+                <tr class="bg-slate-950/60 text-slate-400 font-mono uppercase text-[11px] border-b border-slate-800">
+                  <th class="py-3.5 px-4">Criterio Técnico</th>
+                  <th class="py-3.5 px-4 text-blue-400">Transparencia SGBDD (Motor de BD)</th>
+                  <th class="py-3.5 px-4 text-indigo-400">Interoperabilidad por APIs (Sistema de Info)</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-800/70 text-slate-300">
+                <tr class="hover:bg-slate-800/30">
+                  <td class="py-3.5 px-4 font-semibold text-white">¿Dónde ocurre la integración?</td>
+                  <td class="py-3.5 px-4">Dentro del kernel del SGBD mediante el optimizador de consultas distribuidas.</td>
+                  <td class="py-3.5 px-4">En la capa de aplicación / Middleware (API Gateway, BFF o bus de eventos).</td>
+                </tr>
+                <tr class="hover:bg-slate-800/30">
+                  <td class="py-3.5 px-4 font-semibold text-white">Esquema y Metadatos</td>
+                  <td class="py-3.5 px-4">Catálogo Global unificado que mapea fragmentos (<code class="font-mono text-blue-300">H/V</code>) y sitios físicos.</td>
+                  <td class="py-3.5 px-4">Esquemas desacoplados; contratos públicos definidos vía OpenAPI/Swagger o GraphQL.</td>
+                </tr>
+                <tr class="hover:bg-slate-800/30">
+                  <td class="py-3.5 px-4 font-semibold text-white">Grado de Autonomía Local</td>
+                  <td class="py-3.5 px-4">Autonomía media: los nodos deben respetar el esquema global y el mismo motor SGBD.</td>
+                  <td class="py-3.5 px-4">Autonomía máxima: cada microservicio elige su propio motor (SQL/NoSQL) y lenguaje.</td>
+                </tr>
+                <tr class="hover:bg-slate-800/30">
+                  <td class="py-3.5 px-4 font-semibold text-white">Acoplamiento y Protocolo</td>
+                  <td class="py-3.5 px-4">Alto acoplamiento estructural; protocolo binario nativo de baja latencia entre nodos.</td>
+                  <td class="py-3.5 px-4">Bajo acoplamiento evolutivo; protocolos estándar web (HTTP/REST, JSON, gRPC).</td>
+                </tr>
+                <tr class="hover:bg-slate-800/30">
+                  <td class="py-3.5 px-4 font-semibold text-white">Esfuerzo del Desarrollador</td>
+                  <td class="py-3.5 px-4">Mínimo al consultar: escribe SQL estándar ignorando dónde residen los datos.</td>
+                  <td class="py-3.5 px-4">Alto en orquestación: debe manejar llamadas asíncronas, fallos parciales y serialización.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ==========================================
+         PESTAÑA 2: PREGUNTA 5 (MIDDLEWARE & 2PC)
+         ========================================== -->
+    <section id="tab-p5" class="space-y-8 hidden">
+      
+      <!-- Enunciado Oficial P5 -->
+      <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 sm:p-6 relative overflow-hidden">
+        <div class="absolute top-0 left-0 w-1.5 h-full bg-emerald-500"></div>
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
+          <span class="text-xs font-mono uppercase tracking-wider text-emerald-400 font-semibold flex items-center gap-1.5">
+            <i data-lucide="git-commit" class="w-4 h-4"></i> Pregunta 5 • Gestión de Concurrencia y Control Transaccional
+          </span>
+          <span class="text-xs font-mono text-slate-400">Tema: Middleware + Protocolo Two-Phase Commit (2PC)</span>
+        </div>
+        <p class="text-sm sm:text-base text-slate-300 leading-relaxed">
+          "Para mantener la atomicidad en transacciones distribuidas que actualizan múltiples nodos, el SGBD implementa protocolos estrictos como el <strong class="text-white">compromiso en dos fases (2PC)</strong> apoyado en un nodo coordinador y bloqueos de concurrencia. Explique <strong class="text-emerald-400">qué rol desempeña la capa de middleware o servidor de aplicaciones</strong> en un sistema de información para orquestar la lógica del negocio antes de delegar las consultas transaccionales al motor de base de datos, y <strong class="text-rose-400">analice los impactos operacionales que ocurren si un sitio falla durante la fase de preparación de 2PC</strong>."
+        </p>
+      </div>
+
+      <!-- Simulador Paso a Paso P5 -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-5 border-b border-slate-800">
+          
+          <!-- Selector de Escenario (Exitoso vs Fallo en Prepare) -->
+          <div>
+            <span class="text-xs font-mono uppercase text-slate-400 block mb-2">1. Elige el Escenario de Ejecución 2PC:</span>
+            <div class="inline-flex rounded-xl bg-slate-950 p-1.5 border border-slate-800 w-full sm:w-auto">
+              <button onclick="setP5Scenario('ok')" id="btn-scen-ok" class="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-all bg-emerald-600 text-white shadow">
+                <i data-lucide="check-circle" class="w-4 h-4"></i>
+                <span>Transacción Exitosa (2PC Commit)</span>
+              </button>
+              <button onclick="setP5Scenario('fail')" id="btn-scen-fail" class="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-all text-slate-400 hover:text-white">
+                <i data-lucide="alert-triangle" class="w-4 h-4"></i>
+                <span>Fallo en Fase PREPARE (Impacto Crítico)</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Botón Azul para Avanzar Paso a Paso en P5 -->
+          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            <div class="flex items-center gap-1.5 bg-slate-950 px-3.5 py-2 rounded-xl border border-slate-800 justify-center">
+              <span class="text-xs font-mono text-slate-400">Etapa:</span>
+              <span id="p5-step-badge" class="text-sm font-mono font-bold text-blue-400">1 / 5</span>
+            </div>
+
+            <button onclick="nextP5Step()" id="p5-next-btn" class="flex items-center justify-center gap-2.5 px-6 py-3 rounded-xl font-bold text-sm sm:text-base bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white glow-blue transition-all cursor-pointer select-none">
+              <span id="p5-next-btn-text">Siguiente Paso (1/5)</span>
+              <i data-lucide="arrow-right-circle" class="w-5 h-5"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Barra de progreso de 5 etapas -->
+        <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 my-5" id="p5-stepper-bars">
+          <!-- Renderizado por JS -->
+        </div>
+
+        <!-- LIENZO 2PC + EXPLICACIÓN EN VIVO -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-4 items-stretch">
+          
+          <!-- Diagrama de 2 Capas: Middleware + SGBDD 2PC (7 columnas) -->
+          <div class="lg:col-span-7 bg-slate-950 grid-bg rounded-2xl border border-slate-800 p-4 sm:p-6 flex flex-col justify-between min-h-[420px]">
+            <div class="flex items-center justify-between border-b border-slate-800/80 pb-3 mb-4">
+              <span class="text-xs sm:text-sm font-mono font-bold text-slate-200 uppercase flex items-center gap-2">
+                <i data-lucide="activity" class="w-4 h-4 text-blue-400"></i>
+                ARQUITECTURA TRANSACCIONAL: MIDDLEWARE → MOTOR 2PC
+              </span>
+              <span id="p5-lock-indicator" class="px-2.5 py-0.5 text-[11px] font-mono rounded bg-slate-900 text-slate-400 border border-slate-700">
+                Locks BD: Libres
+              </span>
+            </div>
+
+            <div id="p5-canvas" class="my-auto py-2">
+              <!-- Inyectado por JS -->
+            </div>
+
+            <div class="border-t border-slate-800/80 pt-3 mt-4 flex flex-wrap items-center justify-between gap-2 text-[11px] font-mono text-slate-400">
+              <span id="p5-status-footer">Observa cómo el Middleware filtra antes de bloquear tuplas en la BD</span>
+              <span>Protocolo: Two-Phase Commit + 2PL</span>
+            </div>
+          </div>
+
+          <!-- Explicación del Paso + Consola WAL / Coordinador (5 columnas) -->
+          <div class="lg:col-span-5 flex flex-col justify-between bg-slate-950 rounded-2xl border border-slate-800 p-5 space-y-4">
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <span id="p5-step-tag" class="px-2.5 py-1 rounded-md text-xs font-mono font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                  ETAPA 1 DE 5
+                </span>
+                <span id="p5-layer-name" class="text-xs font-mono text-emerald-400 font-semibold">Capa: Middleware (SI)</span>
+              </div>
+
+              <h3 id="p5-step-title" class="text-lg sm:text-xl font-bold text-white mt-2">
+                Validación de Negocio en Middleware
+              </h3>
+              <p id="p5-step-desc" class="text-sm text-slate-300 mt-2.5 leading-relaxed"></p>
+
+              <div id="p5-alert-box" class="mt-4 p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 flex items-start gap-3">
+                <i data-lucide="shield-alert" class="w-5 h-5 text-blue-400 shrink-0 mt-0.5"></i>
+                <div class="text-xs text-slate-300 leading-relaxed">
+                  <strong class="text-white block mb-0.5">Impacto Operacional en este paso:</strong>
+                  <span id="p5-step-impact"></span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Consola de Bitácora Transaccional (WAL / 2PC Log) -->
+            <div class="bg-slate-900 rounded-xl border border-slate-800 overflow-hidden">
+              <div class="bg-slate-950 px-3.5 py-2 border-b border-slate-800 flex items-center justify-between">
+                <span class="text-[11px] font-mono text-slate-400 flex items-center gap-1.5">
+                  <i data-lucide="terminal-square" class="w-3.5 h-3.5 text-emerald-400"></i>
+                  transaction_coordinator.log
+                </span>
+                <span class="text-[10px] font-mono text-amber-400">ACID / WAL</span>
+              </div>
+              <pre id="p5-code-box" class="p-3.5 text-xs font-mono text-cyan-300 overflow-x-auto leading-relaxed"></pre>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ==========================================
+           ANÁLISIS CONCEPTUAL SIEMPRE VISIBLE (P5)
+           ========================================== -->
+      <div class="space-y-6">
+        <div class="flex items-center gap-3">
+          <div class="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
+            <i data-lucide="cpu" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h2 class="text-xl font-bold text-white">Desglose Teórico y Operacional (Pregunta 5)</h2>
+            <p class="text-xs sm:text-sm text-slate-400">Rol del Middleware antes de llegar al SGBD e impactos reales de un fallo durante la Fase PREPARE de 2PC</p>
+          </div>
+        </div>
+
+        <!-- Bloque 1: Rol del Middleware -->
+        <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-6">
+          <h3 class="text-base sm:text-lg font-bold text-emerald-400 flex items-center gap-2 mb-3">
+            <i data-lucide="server-cog" class="w-5 h-5"></i>
+            Parte A: ¿Qué rol desempeña el Middleware / Servidor de Aplicaciones antes de delegar al SGBD?
+          </h3>
+          <p class="text-sm text-slate-300 leading-relaxed mb-4">
+            En un Sistema de Información moderno (arquitectura en 3 capas o N-capas), el Middleware actúa como un <strong>escudo protector y orquestador de lógica de negocio</strong>. Nunca se abre una transacción distribuida directamente desde el cliente final porque los bloqueos en base de datos son el recurso más caro del sistema. Sus 4 responsabilidades previas son:
+          </p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="bg-slate-950 p-4 rounded-xl border border-slate-800">
+              <span class="text-xs font-mono text-emerald-400 font-bold">1. Filtro Temprano</span>
+              <h4 class="font-bold text-white text-sm mt-1">Autenticación y RBAC</h4>
+              <p class="text-xs text-slate-400 mt-1 leading-relaxed">Verifica tokens JWT, permisos de rol y validez sintáctica del payload. Si es inválido, aborta en RAM sin tocar el disco del SGBD.</p>
+            </div>
+            <div class="bg-slate-950 p-4 rounded-xl border border-slate-800">
+              <span class="text-xs font-mono text-emerald-400 font-bold">2. Reglas de Dominio</span>
+              <h4 class="font-bold text-white text-sm mt-1">Validación de Negocio</h4>
+              <p class="text-xs text-slate-400 mt-1 leading-relaxed">Calcula impuestos, descuentos, cupo de crédito o reglas horarias antes de iniciar el bloque <code class="font-mono text-slate-200">BEGIN TRANSACTION</code>.</p>
+            </div>
+            <div class="bg-slate-950 p-4 rounded-xl border border-slate-800">
+              <span class="text-xs font-mono text-emerald-400 font-bold">3. Gestión de Recursos</span>
+              <h4 class="font-bold text-white text-sm mt-1">Connection Pooling</h4>
+              <p class="text-xs text-slate-400 mt-1 leading-relaxed">Reutiliza conexiones TCP abiertas hacia los nodos de BD, evitando el costo de 3-way handshake y autenticación por cada usuario.</p>
+            </div>
+            <div class="bg-slate-950 p-4 rounded-xl border border-slate-800">
+              <span class="text-xs font-mono text-emerald-400 font-bold">4. Demarcación TX</span>
+              <h4 class="font-bold text-white text-sm mt-1">Orquestación o Compensación</h4>
+              <p class="text-xs text-slate-400 mt-1 leading-relaxed">Decide si delega una transacción rígida (XA / 2PC) al motor de BD o si coordina transacciones compensatorias (Patrón Saga).</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bloque 2: Los 4 Impactos Operacionales de Fallo en Fase PREPARE -->
+        <div class="bg-slate-900/90 border border-rose-500/30 rounded-2xl p-6">
+          <h3 class="text-base sm:text-lg font-bold text-rose-400 flex items-center gap-2 mb-3">
+            <i data-lucide="flame" class="w-5 h-5"></i>
+            Parte B: Impactos Operacionales si un Sitio Falla durante la Fase de Preparación (PREPARE) de 2PC
+          </h3>
+          <p class="text-sm text-slate-300 leading-relaxed mb-4">
+            El protocolo <strong>2PC (Two-Phase Commit) es un protocolo bloqueante</strong>. Si un nodo participante (ej. Guayaquil) sufre un corte de energía, caída de red o interbloqueo justo cuando el Coordinador espera los votos de la Fase 1 (<code class="font-mono text-rose-300">PREPARE</code>), ocurren 4 impactos operacionales severos:
+          </p>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="bg-slate-950 p-4 rounded-xl border border-rose-500/20 flex gap-3.5">
+              <div class="w-8 h-8 rounded-lg bg-rose-500/10 border border-rose-500/30 flex items-center justify-center shrink-0 text-rose-400 font-mono font-bold text-sm">1</div>
+              <div>
+                <h4 class="font-bold text-white text-sm">Retención Prolongada de Bloqueos Exclusivos (X-Locks)</h4>
+                <p class="text-xs text-slate-300 mt-1 leading-relaxed">
+                  Los nodos sanos (ej. Quito) que ya votaron <code class="font-mono text-emerald-300">YES</code> adquirieron bloqueos <code class="font-mono">X-Lock</code> sobre las filas modificadas. No pueden liberar esos bloqueos hasta recibir la orden final del Coordinador, congelando esas filas durante todo el ventana de <em>timeout</em>.
+                </p>
+              </div>
+            </div>
+            <div class="bg-slate-950 p-4 rounded-xl border border-rose-500/20 flex gap-3.5">
+              <div class="w-8 h-8 rounded-lg bg-rose-500/10 border border-rose-500/30 flex items-center justify-center shrink-0 text-rose-400 font-mono font-bold text-sm">2</div>
+              <div>
+                <h4 class="font-bold text-white text-sm">Efecto Dominó en Concurrencia (Convoy Effect)</h4>
+                <p class="text-xs text-slate-300 mt-1 leading-relaxed">
+                  Otros clientes del sistema que intenten leer o actualizar el mismo producto o cuenta en el nodo sano quedan en cola de espera (<code class="font-mono">LOCK WAIT</code>), agotando el pool de conexiones del Middleware y degradando el throughput global.
+                </p>
+              </div>
+            </div>
+            <div class="bg-slate-950 p-4 rounded-xl border border-rose-500/20 flex gap-3.5">
+              <div class="w-8 h-8 rounded-lg bg-rose-500/10 border border-rose-500/30 flex items-center justify-center shrink-0 text-rose-400 font-mono font-bold text-sm">3</div>
+              <div>
+                <h4 class="font-bold text-white text-sm">Transacciones "In-Doubt" (En Duda)</h4>
+                <p class="text-xs text-slate-300 mt-1 leading-relaxed">
+                  Si el fallo ocurre después de que un nodo escribió su bloque <code class="font-mono">PREPARED</code> en el disco WAL y se pierde conexión con el Coordinador, la transacción queda en estado <em>In-Doubt</em>, requiriendo a veces intervención manual del DBA (<code class="font-mono">ROLLBACK PREPARED</code>).
+                </p>
+              </div>
+            </div>
+            <div class="bg-slate-950 p-4 rounded-xl border border-rose-500/20 flex gap-3.5">
+              <div class="w-8 h-8 rounded-lg bg-rose-500/10 border border-rose-500/30 flex items-center justify-center shrink-0 text-rose-400 font-mono font-bold text-sm">4</div>
+              <div>
+                <h4 class="font-bold text-white text-sm">Costo de I/O por Rollback Global y Undo Logs</h4>
+                <p class="text-xs text-slate-300 mt-1 leading-relaxed">
+                  Para preservar la <strong>Atomicidad</strong>, basta que un sitio falle en Fase 1 para que el Coordinador emita <code class="font-mono text-rose-300">GLOBAL_ABORT</code>. Todos los demás nodos deben leer su <em>Undo Log</em> para deshacer el trabajo ya escrito en disco.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ==========================================
+         PESTAÑA 3: QUIZ INTERACTIVO + GITHUB PAGES
+         ========================================== -->
+    <section id="tab-quiz" class="space-y-8 hidden">
+      
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        <!-- Columna Quiz (7 cols) -->
+        <div class="lg:col-span-7 bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-6">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+            <div>
+              <span class="text-xs font-mono uppercase text-blue-400 font-bold">Autoevaluación Dinámica</span>
+              <h2 class="text-xl font-bold text-white mt-0.5">Reto Rápido para 6to Nivel (P4 & P5)</h2>
+            </div>
+            <button onclick="resetQuiz()" class="px-3 py-1.5 rounded-lg text-xs font-mono bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center gap-1.5">
+              <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Reiniciar
+            </button>
+          </div>
+
+          <div id="quiz-container" class="space-y-5">
+            <!-- Preguntas generadas por JS -->
+          </div>
+        </div>
+
+        <!-- Columna Guía Permanente GitHub Pages (5 cols) -->
+        <div class="lg:col-span-5 space-y-6">
+          <div class="bg-gradient-to-b from-blue-950/60 to-slate-900 border border-blue-500/30 rounded-2xl p-6 space-y-4">
+            <div class="flex items-center gap-2.5">
+              <div class="p-2 rounded-lg bg-blue-500/20 text-blue-400">
+                <i data-lucide="globe" class="w-5 h-5"></i>
+              </div>
+              <div>
+                <h3 class="text-base font-bold text-white">Cómo Subir a GitHub Pages (Link 24/7)</h3>
+                <p class="text-xs text-blue-300">Disponible en celular, carro, gym o PC sin servidor local</p>
+              </div>
+            </div>
+
+            <p class="text-xs sm:text-sm text-slate-300 leading-relaxed">
+              Este material fue diseñado en un <strong>único archivo <code class="font-mono text-white">index.html</code></strong> sin dependencias de compilación. Sigue estos 3 pasos para obtener tu enlace público gratuito:
+            </p>
+
+            <ol class="space-y-3 text-xs sm:text-sm text-slate-300 list-decimal list-inside bg-slate-950/80 p-4 rounded-xl border border-slate-800">
+              <li>
+                Entra a <strong class="text-white">github.com</strong> y crea un repositorio público nuevo (ej. <code class="font-mono text-emerald-400">arquitectura-bd-si</code>).
+              </li>
+              <li>
+                Sube este archivo con el nombre exacto <code class="font-mono text-amber-300">index.html</code> (puedes arrastrarlo en <em>"Add file → Upload files"</em> y darle a <em>Commit</em>).
+              </li>
+              <li>
+                Ve a <strong class="text-white">Settings → Pages</strong> (en el menú izquierdo), en <strong>Branch</strong> elige <code class="font-mono text-blue-300">main</code> y guarda (<em>Save</em>).
+              </li>
+            </ol>
+
+            <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 font-mono text-xs text-slate-300 space-y-1">
+              <div class="text-slate-500"># Tu link permanente tendrá este formato:</div>
+              <div class="text-emerald-400 break-all">https://TU-USUARIO.github.io/arquitectura-bd-si/</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="border-t border-slate-900 bg-slate-950 py-5 mt-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 font-mono gap-2">
+      <span>Ingeniería en Sistemas • Bases de Datos II (Preguntas 4 y 5)</span>
+      <span>Material Didáctico Interactivo • Responsive Web App</span>
+    </div>
+  </footer>
+
+  <!-- ==========================================
+       LÓGICA INTERACTIVA (JAVASCRIPT PURO)
+       ========================================== -->
+  <script>
+    // --- ESTADO GLOBAL P4 ---
+    let p4Mode = 'sgbdd'; // 'sgbdd' | 'apis'
+    let p4Step = 0; // 0 a 3
+
+    const p4Data = {
+      sgbdd: {
+        title: "TOPOLOGÍA: MOTOR SGBDD HOMOGÉNEO (ESQUEMA GLOBAL)",
+        protocol: "Protocolo Nativo Binario SGBD (Bajo Nivel)",
+        layer: "Capa: Motor de Base de Datos",
+        steps: [
+          {
+            short: "1. Query Global",
+            title: "Paso 1: Consulta SQL Única sobre Esquema Global",
+            desc: "La aplicación o el DBA lanza una sentencia SQL estándar hacia una tabla lógica global (CLIENTES), desconociendo por completo que la tabla está dividida en 3 ciudades.",
+            highlight: "Transparencia de Localización y Fragmentación activadas: el usuario no especifica IPs, puertos ni nombres de fragmentos en su cláusula FROM.",
+            codeLabel: "consulta_global.sql",
+            code: `-- El desarrollador ve UNA sola tabla lógica:
+SELECT id_cliente, nombre, cupo_credito
+FROM CLIENTES
+WHERE estado = 'ACT' AND cupo_credito > 1500;`
+          },
+          {
+            short: "2. Catálogo & Split",
+            title: "Paso 2: Diccionario Global y Descomposición de Consulta",
+            desc: "El Optimizador Distribuido del SGBD intercepta el SQL, consulta el Catálogo Global de Metadatos y reescribe el árbol algebraico dividiéndolo en subconsultas para cada fragmento horizontal.",
+            highlight: "Todo ocurre dentro del motor de base de datos; la capa de aplicación sigue esperando una respuesta SQL normal.",
+            codeLabel: "optimizador_distribuido.plan",
+            code: `-- Reescritura interna automática en el Motor SGBDD:
+SUBQUERY_1 -> NODO_QUITO (10.0.1.10): SELECT ... FROM CLIENTES_UIO
+SUBQUERY_2 -> NODO_GYE   (10.0.2.20): SELECT ... FROM CLIENTES_GYE
+SUBQUERY_3 -> NODO_CUE   (10.0.3.30): SELECT ... FROM CLIENTES_CUE`
+          },
+          {
+            short: "3. Ejecución Nodos",
+            title: "Paso 3: Ejecución Física Local en Nodos Homogéneos",
+            desc: "Cada nodo remoto ejecuta su subconsulta sobre su propio disco e índices B-Tree locales. Como todos corren el mismo motor SGBD, usan tipos de datos y protocolos binarios idénticos.",
+            highlight: "Autonomía local de ejecución, pero subordinada al esquema global compartido de la base de datos distribuida.",
+            codeLabel: "ejecucion_remota.trace",
+            code: `[NODO_QUITO:5432] Index Scan on idx_cli_uio (cost=0.15..4.20) -> 18 tuplas
+[NODO_GYE:5432]   Index Scan on idx_cli_gye (cost=0.15..5.10) -> 24 tuplas
+[NODO_CUE:5432]   Index Scan on idx_cli_cue (cost=0.12..2.80) -> 9 tuplas`
+          },
+          {
+            short: "4. Unión Virtual",
+            title: "Paso 4: Reconstrucción (UNION) y Respuesta Transparente",
+            desc: "El nodo coordinador recibe los bloques de tuplas, ejecuta un UNION ALL / Merge Join en sus buffers internos y entrega un único ResultSet al cliente.",
+            highlight: "Para el sistema superior, la distribución fue 100% invisible. Esta es la esencia de la arquitectura de BD distribuida.",
+            codeLabel: "resultado_unificado.sql",
+            code: `-- Resultado entregado como una sola tabla:
+id_cliente | nombre            | cupo_credito
+-----------+-------------------+-------------
+CLI-00104  | Corporación Fav.  | 5000.00
+CLI-02089  | Comercial Rosado  | 4200.00
+(51 filas devueltas en 18.4 ms - Transparencia Total)`
+          }
+        ]
+      },
+      apis: {
+        title: "TOPOLOGÍA: SISTEMA DE INFORMACIÓN (APIS WEB HETEROGÉNEAS)",
+        protocol: "HTTP/2 • REST / GraphQL • Payloads JSON",
+        layer: "Capa: Sistema de Información (Aplicación)",
+        steps: [
+          {
+            short: "1. Request Cliente",
+            title: "Paso 1: Petición de Negocio al API Gateway / BFF",
+            desc: "El Frontend Web/Móvil requiere mostrar el dashboard consolidado de un cliente. Envía una petición HTTP GET al API Gateway del Sistema de Información.",
+            highlight: "Aquí no se envía SQL; se invoca una capacidad de negocio expuesta como endpoint REST.",
+            codeLabel: "request_frontend.http",
+            code: `GET /api/v2/clientes/1790012345001/resumen-360 HTTP/1.1
+Host: api.lacava-erp.ec
+Authorization: Bearer eyJhbGciOiJIUzI1NiIs...
+Accept: application/json`
+          },
+          {
+            short: "2. Orquestación API",
+            title: "Paso 2: Coordinación Explícita de Servicios Heterogéneos",
+            desc: "Como NO existe un esquema global de BD, el Middleware debe llamar por código a 3 microservicios distintos que no comparten base de datos ni lenguaje de programación.",
+            highlight: "La ubicación de los servicios (Service Discovery) y la llamada en paralelo (Promise.all / async) es responsabilidad de la capa de aplicación.",
+            codeLabel: "orchestrator_service.ts",
+            code: `// Orquestación explícita en el Servidor de Aplicaciones:
+const [perfil, facturas, analitica] = await Promise.all([
+  fetch("https://crm-service.internal/users/1790012345001"),
+  fetch("https://erp-facturacion.internal/invoices?ruc=1790012345001"),
+  fetch("https://bi-nosql.internal/scoring/1790012345001")
+]);`
+          },
+          {
+            short: "3. Autonomía Políglota",
+            title: "Paso 3: Ejecución en Motores Heterogéneos y Serialización",
+            desc: "Cada servicio consulta su propio motor independiente (PostgreSQL, MariaDB y MongoDB) con total autonomía de diseño y traduce sus datos internos a contratos JSON.",
+            highlight: "Interoperabilidad real: tecnologías completamente distintas logran entenderse gracias a estándares web (JSON/HTTP), no por compartir el motor de BD.",
+            codeLabel: "heterogeneous_nodes.json",
+            code: `CRM_Service (Node + Redis)     -> 200 OK {"nombre": "Corp Favorita"}
+ERP_Service (Python + Postgres)-> 200 OK {"saldo_pendiente": 1240.50}
+BI_Service  (Go + MongoDB)     -> 200 OK {"riesgo_crediticio": "BAJO"}`
+          },
+          {
+            short: "4. Agregación JSON",
+            title: "Paso 4: Composición en Memoria y Respuesta Unificada",
+            desc: "El Middleware combina los 3 objetos JSON en memoria RAM, aplica reglas de formato o filtrado de seguridad y devuelve un único documento JSON al navegador.",
+            highlight: "Diferencia clave: el 'JOIN' no lo hizo la base de datos a nivel de tuplas, lo hizo el servidor de aplicaciones uniendo respuestas de APIs.",
+            codeLabel: "response_200.json",
+            code: `{
+  "ruc": "1790012345001",
+  "razonSocial": "Corporación Favorita",
+  "finanzas": { "saldoPendiente": 1240.50, "moneda": "USD" },
+  "analitica": { "score": "BAJO", "fuente": "MongoDB_Cluster" }
+}`
+          }
+        ]
+      }
+    };
+
+    function renderP4() {
+      const current = p4Data[p4Mode];
+      const stepObj = current.steps[p4Step];
+
+      // Botones de modo
+      const btnSgbdd = document.getElementById('btn-mode-sgbdd');
+      const btnApis = document.getElementById('btn-mode-apis');
+      if (p4Mode === 'sgbdd') {
+        btnSgbdd.className = "flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-all bg-blue-600 text-white shadow";
+        btnApis.className = "flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-all text-slate-400 hover:text-white";
+      } else {
+        btnApis.className = "flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-all bg-indigo-600 text-white shadow";
+        btnSgbdd.className = "flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-all text-slate-400 hover:text-white";
+      }
+
+      // Textos superiores
+      document.getElementById('p4-step-badge').textContent = `${p4Step + 1} / 4`;
+      document.getElementById('p4-next-btn-text').textContent = p4Step < 3 ? `Siguiente Paso (${p4Step + 1}/4)` : `Reiniciar al Paso 1`;
+      document.getElementById('p4-diagram-title').textContent = current.title;
+      document.getElementById('p4-protocol-tag').textContent = current.protocol;
+      document.getElementById('p4-step-tag').textContent = `PASO ${p4Step + 1} DE 4`;
+      document.getElementById('p4-layer-pill').textContent = current.layer;
+      document.getElementById('p4-step-title').textContent = stepObj.title;
+      document.getElementById('p4-step-desc').textContent = stepObj.desc;
+      document.getElementById('p4-step-highlight').textContent = stepObj.highlight;
+      document.getElementById('p4-code-label').textContent = stepObj.codeLabel;
+      document.getElementById('p4-code-box').textContent = stepObj.code;
+
+      // Barras de pasos
+      const stepperHtml = current.steps.map((s, idx) => {
+        const active = idx === p4Step;
+        const passed = idx < p4Step;
+        return `
+          <button onclick="goToP4Step(${idx})" class="text-left p-2.5 rounded-xl border transition-all ${
+            active 
+              ? 'bg-blue-600/20 border-blue-500 text-white shadow' 
+              : passed 
+                ? 'bg-slate-900 border-blue-500/40 text-blue-300' 
+                : 'bg-slate-950 border-slate-800 text-slate-500 hover:text-slate-300'
+          }">
+            <div class="flex items-center justify-between text-[11px] font-mono">
+              <span>PASO ${idx + 1}</span>
+              <span>${active ? '● ACTIVO' : passed ? '✓ LISTO' : ''}</span>
+            </div>
+            <div class="text-xs font-bold truncate mt-0.5">${s.short}</div>
+          </button>
+        `;
+      }).join('');
+      document.getElementById('p4-stepper-bars').innerHTML = stepperHtml;
+
+      // Lienzo gráfico según modo y paso
+      const canvas = document.getElementById('p4-canvas');
+      if (p4Mode === 'sgbdd') {
+        canvas.innerHTML = `
+          <div class="flex flex-col items-center space-y-5">
+            <!-- Nodo Cliente / App -->
+            <div class="w-full max-w-md p-3.5 rounded-xl border transition-all ${p4Step === 0 || p4Step === 3 ? 'bg-blue-950/80 border-blue-400 glow-blue' : 'bg-slate-900/70 border-slate-800 opacity-60'}">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-mono font-bold text-blue-300">CLIENTE SQL / APLICACIÓN</span>
+                <span class="text-[11px] font-mono px-2 py-0.5 rounded bg-slate-950 text-slate-300">${p4Step === 0 ? 'Enviando SELECT Global...' : p4Step === 3 ? 'Tabla Única Recibida ✓' : 'Esperando al motor'}</span>
+              </div>
+              <div class="text-xs font-mono text-white mt-1">SELECT * FROM CLIENTES WHERE ...</div>
+            </div>
+
+            <!-- Flecha 1 -->
+            <div class="flex flex-col items-center">
+              <div class="h-5 w-0.5 ${p4Step >= 1 ? 'bg-blue-400' : 'bg-slate-700'}"></div>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded ${p4Step === 1 ? 'bg-blue-600 text-white font-bold animate-pulse-fast' : 'text-slate-500'}">
+                ${p4Step === 3 ? '▲ ResultSet Unificado (UNION)' : '▼ Esquema Global Enmascara Fragmentos'}
+              </span>
+            </div>
+
+            <!-- Motor Coordinador SGBDD -->
+            <div class="w-full max-w-lg p-4 rounded-xl border transition-all ${p4Step === 1 || p4Step === 3 ? 'bg-indigo-950/90 border-indigo-400 glow-indigo' : 'bg-slate-900/70 border-slate-800 opacity-75'}">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-mono font-bold text-indigo-300">CATÁLOGO GLOBAL & OPTIMIZADOR DISTRIBUIDO</span>
+                <span class="text-[10px] font-mono text-indigo-200">Transparencia SGBDD</span>
+              </div>
+              <p class="text-xs text-slate-300 mt-1">
+                ${p4Step === 1 ? 'Mapeando tabla lógica CLIENTES → 3 fragmentos físicos por ciudad.' : p4Step === 3 ? 'Ensamblando tuplas de Quito, Guayaquil y Cuenca en una sola vista.' : 'Diccionario de datos global activo.'}
+              </p>
+            </div>
+
+            <!-- Nodos Físicos Homogéneos -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full pt-2">
+              <div class="p-3 rounded-xl border transition-all ${p4Step === 2 ? 'bg-emerald-950/80 border-emerald-400 glow-emerald' : 'bg-slate-900/60 border-slate-800 opacity-65'}">
+                <div class="text-[11px] font-mono font-bold text-emerald-300">NODO 1: QUITO</div>
+                <div class="text-xs font-bold text-white mt-0.5">PostgreSQL (Fragmento H1)</div>
+                <div class="text-[11px] font-mono text-slate-400 mt-1">Tabla: CLIENTES_UIO</div>
+              </div>
+              <div class="p-3 rounded-xl border transition-all ${p4Step === 2 ? 'bg-emerald-950/80 border-emerald-400 glow-emerald' : 'bg-slate-900/60 border-slate-800 opacity-65'}">
+                <div class="text-[11px] font-mono font-bold text-emerald-300">NODO 2: GUAYAQUIL</div>
+                <div class="text-xs font-bold text-white mt-0.5">PostgreSQL (Fragmento H2)</div>
+                <div class="text-[11px] font-mono text-slate-400 mt-1">Tabla: CLIENTES_GYE</div>
+              </div>
+              <div class="p-3 rounded-xl border transition-all ${p4Step === 2 ? 'bg-emerald-950/80 border-emerald-400 glow-emerald' : 'bg-slate-900/60 border-slate-800 opacity-65'}">
+                <div class="text-[11px] font-mono font-bold text-emerald-300">NODO 3: CUENCA</div>
+                <div class="text-xs font-bold text-white mt-0.5">PostgreSQL (Fragmento H3)</div>
+                <div class="text-[11px] font-mono text-slate-400 mt-1">Tabla: CLIENTES_CUE</div>
+              </div>
+            </div>
+          </div>
+        `;
+      } else {
+        canvas.innerHTML = `
+          <div class="flex flex-col items-center space-y-5">
+            <!-- Frontend App -->
+            <div class="w-full max-w-md p-3.5 rounded-xl border transition-all ${p4Step === 0 || p4Step === 3 ? 'bg-indigo-950/80 border-indigo-400 glow-indigo' : 'bg-slate-900/70 border-slate-800 opacity-60'}">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-mono font-bold text-indigo-300">FRONTEND WEB / MÓVIL (CAPA PRESENTACIÓN)</span>
+                <span class="text-[11px] font-mono px-2 py-0.5 rounded bg-slate-950 text-slate-300">${p4Step === 0 ? 'GET /resumen-360' : p4Step === 3 ? 'JSON Consolidado ✓' : 'Await HTTP...'}</span>
+              </div>
+              <div class="text-xs font-mono text-white mt-1">Consume contrato REST sin conocer las BDs</div>
+            </div>
+
+            <!-- Flecha API -->
+            <div class="flex flex-col items-center">
+              <div class="h-5 w-0.5 ${p4Step >= 1 ? 'bg-indigo-400' : 'bg-slate-700'}"></div>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded ${p4Step === 1 ? 'bg-indigo-600 text-white font-bold animate-pulse-fast' : 'text-slate-500'}">
+                ${p4Step === 3 ? '▲ Payload JSON Agregado en RAM' : '▼ Coordinación Explícita de Endpoints'}
+              </span>
+            </div>
+
+            <!-- API Gateway / BFF -->
+            <div class="w-full max-w-lg p-4 rounded-xl border transition-all ${p4Step === 1 || p4Step === 3 ? 'bg-blue-950/90 border-blue-400 glow-blue' : 'bg-slate-900/70 border-slate-800 opacity-75'}">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-mono font-bold text-blue-300">API GATEWAY / MIDDLEWARE ORQUESTADOR</span>
+                <span class="text-[10px] font-mono text-blue-200">Sin Esquema Global BD</span>
+              </div>
+              <p class="text-xs text-slate-300 mt-1">
+                ${p4Step === 1 ? 'Dispara 3 peticiones HTTP asíncronas hacia microservicios independientes.' : p4Step === 3 ? 'Combina los 3 JSON en memoria de aplicación y filtra campos.' : 'Orquestador de servicios empresariales.'}
+              </p>
+            </div>
+
+            <!-- Microservicios Heterogéneos -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full pt-2">
+              <div class="p-3 rounded-xl border transition-all ${p4Step === 2 ? 'bg-amber-950/80 border-amber-400 glow-amber' : 'bg-slate-900/60 border-slate-800 opacity-65'}">
+                <div class="text-[11px] font-mono font-bold text-amber-300">SERVICIO CRM</div>
+                <div class="text-xs font-bold text-white mt-0.5">Node.js + Redis</div>
+                <div class="text-[11px] font-mono text-slate-400 mt-1">REST JSON • Puerto 3001</div>
+              </div>
+              <div class="p-3 rounded-xl border transition-all ${p4Step === 2 ? 'bg-emerald-950/80 border-emerald-400 glow-emerald' : 'bg-slate-900/60 border-slate-800 opacity-65'}">
+                <div class="text-[11px] font-mono font-bold text-emerald-300">ERP FACTURACIÓN</div>
+                <div class="text-xs font-bold text-white mt-0.5">Python + PostgreSQL</div>
+                <div class="text-[11px] font-mono text-slate-400 mt-1">REST JSON • Puerto 8000</div>
+              </div>
+              <div class="p-3 rounded-xl border transition-all ${p4Step === 2 ? 'bg-cyan-950/80 border-cyan-400 glow-blue' : 'bg-slate-900/60 border-slate-800 opacity-65'}">
+                <div class="text-[11px] font-mono font-bold text-cyan-300">ANALÍTICA & SCORING</div>
+                <div class="text-xs font-bold text-white mt-0.5">Go + MongoDB NoSQL</div>
+                <div class="text-[11px] font-mono text-slate-400 mt-1">gRPC/JSON • Puerto 9090</div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    function setP4Mode(mode) {
+      p4Mode = mode;
+      p4Step = 0;
+      renderP4();
+    }
+
+    function nextP4Step() {
+      p4Step = (p4Step + 1) % 4;
+      renderP4();
+    }
+
+    function goToP4Step(idx) {
+      p4Step = idx;
+      renderP4();
+    }
+
+    // --- ESTADO GLOBAL P5 (MIDDLEWARE + 2PC) ---
+    let p5Scenario = 'ok'; // 'ok' | 'fail'
+    let p5Step = 0; // 0 a 4
+
+    const p5Data = {
+      ok: [
+        {
+          short: "1. Filtro Middleware",
+          layer: "Capa: Middleware / Servidor de Aplicaciones",
+          lockStatus: "Locks BD: 0 (Sin tocar la BD aún)",
+          title: "Etapa 1: Validación de Negocio y Seguridad en el Middleware",
+          desc: "El usuario solicita aprobar una Orden de Compra distribuida. Antes de abrir conexiones o bloquear tablas en la BD, el Middleware valida el token JWT, el rol 'Jefe_COMPRAS' y verifica que el monto no supere el presupuesto del departamento.",
+          impact: "Ahorro masivo de recursos: las peticiones inválidas son rechazadas en memoria RAM en < 2ms sin generar bloqueos en el SGBD.",
+          code: `[MIDDLEWARE] POST /api/compras/aprobar {id_Compra: "OC-904", total: 1200}
+[AUTH_GUARD] Rol 'Jefe_COMPRAS' verificado OK.
+[BIZ_RULES]  Presupuesto disponible ($2,500 >= $1,200) -> VALIDADO.`
+        },
+        {
+          short: "2. Inicio TX Distribuida",
+          layer: "Capa: Middleware → Coordinador SGBD",
+          lockStatus: "Locks BD: Contexto XA Abierto",
+          title: "Etapa 2: Demarcación Transaccional y Enrutamiento al Coordinador",
+          desc: "Superadas las reglas del negocio, el Middleware toma una conexión del pool e inicia formalmente la transacción distribuida delegando el control ACID al Nodo Coordinador del SGBD.",
+          impact: "El Middleware traduce una acción de negocio ('Aprobar Compra') en operaciones atómicas sobre múltiples nodos físicos.",
+          code: `[MIDDLEWARE] Iniciando contexto transaccional distribuido...
+BEGIN DISTRIBUTED TRANSACTION 'TX_OC_904';
+  -> Nodo 1 (Bodega Quito):   INSERT INTO recepciones ...
+  -> Nodo 2 (Finanzas GYE):   INSERT INTO asientos_contables ...`
+        },
+        {
+          short: "3. Fase 1: PREPARE",
+          layer: "Capa: Motor de BD (Protocolo 2PC - Fase 1)",
+          lockStatus: "Locks BD: X-LOCK ACTIVO en Nodos 1 y 2",
+          title: "Etapa 3: Fase de Preparación (PREPARE) y Bloqueos Exclusivos",
+          desc: "El Coordinador 2PC envía el mensaje PREPARE a los nodos de Quito y Guayaquil. Cada nodo ejecuta la sentencia localmente, adquiere bloqueos exclusivos (X-Lock) sobre las tuplas afectadas y fuerza la escritura en su registro WAL (Write-Ahead Log) en disco.",
+          impact: "¡Punto crítico de concurrencia! Desde este milisegundo, ningún otro usuario puede modificar esas filas hasta que concluya el protocolo 2PC.",
+          code: `[COORDINADOR_2PC] Broadcast -> PREPARE TRANSACTION 'TX_OC_904'
+[NODO_QUITO]      Adquiere X-Lock en RECEPCIONES. Escribe Undo/Redo en WAL.
+[NODO_GYE]        Adquiere X-Lock en ASIENTOS. Escribe Undo/Redo en WAL.`
+        },
+        {
+          short: "4. Votación Unánime",
+          layer: "Capa: Motor de BD (Consenso 2PC)",
+          lockStatus: "Locks BD: X-LOCK Retenido (Esperando Decisión)",
+          title: "Etapa 4: Recepción Exitosa de Votos (VOTE_COMMIT)",
+          desc: "Tanto el Nodo Quito como el Nodo Guayaquil confirman que sus restricciones de integridad se cumplen y que el registro WAL fue persistido en disco sin errores, respondiendo VOTE_COMMIT (SÍ) al Coordinador.",
+          impact: "Al existir unanimidad, el Coordinador escribe 'GLOBAL_COMMIT' en su propio log de disco. La transacción ya es irreversible.",
+          code: `[NODO_QUITO -> COORD] VOTE_COMMIT (PREPARED OK)
+[NODO_GYE   -> COORD] VOTE_COMMIT (PREPARED OK)
+[COORDINADOR_2PC]     Consenso unánime alcanzado -> Escribe GLOBAL_COMMIT en WAL.`
+        },
+        {
+          short: "5. Fase 2: COMMIT",
+          layer: "Capa: Motor de BD → Middleware",
+          lockStatus: "Locks BD: LIBERADOS ✓",
+          title: "Etapa 5: Fase de Compromiso (GLOBAL COMMIT) y Liberación de Locks",
+          desc: "El Coordinador envía GLOBAL_COMMIT a todos los nodos. Cada sitio hace permanentes los cambios, libera inmediatamente los bloqueos exclusivos (X-Locks) para otros usuarios y el Middleware responde HTTP 200 OK.",
+          impact: "Atomicidad y consistencia garantizadas en todos los sitios con mínima ventana de bloqueo.",
+          code: `[COORDINADOR_2PC] Broadcast -> COMMIT PREPARED 'TX_OC_904'
+[NODO_QUITO]      Commit aplicado. X-Locks liberados -> ACK.
+[NODO_GYE]        Commit aplicado. X-Locks liberados -> ACK.
+[MIDDLEWARE]      HTTP/1.1 200 OK {"status": "APROBADA_Y_CONTABILIZADA"}`
+        }
+      ],
+      fail: [
+        {
+          short: "1. Filtro Middleware",
+          layer: "Capa: Middleware / Servidor de Aplicaciones",
+          lockStatus: "Locks BD: 0 (Sin tocar la BD aún)",
+          title: "Etapa 1: Validación de Negocio en el Middleware",
+          desc: "Igual que en el flujo normal, el Middleware valida permisos RBAC y reglas de negocio antes de tocar la base de datos. Todo está en orden a nivel lógico, por lo que autoriza pasar al motor de BD.",
+          impact: "El Middleware no puede adivinar si un nodo físico de BD caerá a mitad del protocolo 2PC, pero prepara manejadores de excepción (try/catch y timeouts).",
+          code: `[MIDDLEWARE] POST /api/compras/aprobar {id_Compra: "OC-904", total: 1200}
+[AUTH_GUARD] Rol 'Jefe_COMPRAS' OK.
+[BIZ_RULES]  Reglas de negocio validadas -> Delegando a SGBD.`
+        },
+        {
+          short: "2. Inicio TX Distribuida",
+          layer: "Capa: Middleware → Coordinador SGBD",
+          lockStatus: "Locks BD: Contexto XA Abierto",
+          title: "Etapa 2: Apertura de Transacción Distribuida",
+          desc: "El servidor de aplicaciones abre el contexto transaccional distribuido y envía las sentencias SQL al Coordinador 2PC para actualizar Quito y Guayaquil de forma atómica.",
+          impact: "Se asigna un identificador global de transacción (XID) y se inicia el temporizador de timeout distribuido.",
+          code: `BEGIN DISTRIBUTED TRANSACTION 'TX_OC_904';
+SET LOCAL lock_timeout = '5000ms';
+  -> Participante 1: NODO_QUITO
+  -> Participante 2: NODO_GYE`
+        },
+        {
+          short: "3. Fase 1: PREPARE",
+          layer: "Capa: Motor de BD (Protocolo 2PC - Fase 1)",
+          lockStatus: "Locks BD: X-LOCK ACTIVO en Nodo Quito",
+          title: "Etapa 3: Envío de PREPARE y Bloqueo de Recursos en Nodos Sanos",
+          desc: "El Coordinador envía PREPARE a ambos sitios. El Nodo Quito responde rápido: bloquea las filas con un X-Lock, escribe en su WAL y queda en estado PREPARED. Pero el Nodo Guayaquil sufre una caída abrupta.",
+          impact: "¡Peligro operacional! El Nodo Quito ya bloqueó sus filas y prometió hacer commit, por lo que pierde su autonomía para liberar esos registros por sí solo.",
+          code: `[COORDINADOR_2PC] Broadcast -> PREPARE TRANSACTION 'TX_OC_904'
+[NODO_QUITO]      X-Lock adquirido. Estado = PREPARED. Voto = YES.
+[NODO_GYE]        ⚡ ERROR DE RED / CAÍDA DE NODO DURANTE PREPARE...`
+        },
+        {
+          short: "4. FALLO & BLOQUEO",
+          layer: "Capa: Motor de BD (Bloqueo por Fallo en Fase 1)",
+          lockStatus: "⚠️ CRÍTICO: NODO QUITO BLOQUEADO (IN-DOUBT)",
+          title: "Etapa 4: Impacto Operacional — Inanición y Transacción In-Doubt",
+          desc: "Mientras el Coordinador espera a que venza el Timeout del Nodo Guayaquil (o recibe un VOTE_ABORT), las filas en el Nodo Quito permanecen bloqueadas (In-Doubt). Otros usuarios en Quito que intentan facturar o consultar quedan congelados en cola.",
+          impact: "Protocolo bloqueante: un fallo en Guayaquil paraliza las operaciones concurrentes de Quito debido a los X-Locks retenidos durante la Fase 1.",
+          code: `[COORDINADOR_2PC] Esperando voto de NODO_GYE... Timeout (5000ms) expirado!
+[ALERTA_CONCURRENCIA] 14 transacciones en NODO_QUITO en estado LOCK_WAIT
+                      esperando liberación de X-Lock retenido por 'TX_OC_904'.`
+        },
+        {
+          short: "5. Fase 2: ROLLBACK",
+          layer: "Capa: Motor de BD → Middleware (Abort Global)",
+          lockStatus: "Locks BD: Revertidos y Liberados tras Rollback",
+          title: "Etapa 5: GLOBAL_ABORT, Lectura de Undo Log y Excepción al Middleware",
+          desc: "Como 2PC exige unanimidad para garantizar Atomicidad, el Coordinador decreta GLOBAL_ABORT. El Nodo Quito debe leer su Undo Log para deshacer los cambios en disco, libera los X-Locks y el Middleware captura el error devolviendo HTTP 503.",
+          impact: "Se preserva la consistencia de los datos (cero datos huérfanos), pero a costa de alto consumo de I/O de disco y latencia para los usuarios.",
+          code: `[COORDINADOR_2PC] Decisión -> GLOBAL_ABORT 'TX_OC_904'
+[NODO_QUITO]      Aplicando UNDO LOG... Cambios revertidos. X-Locks liberados.
+[MIDDLEWARE]      Excepción capturada -> HTTP 503 Service Unavailable
+                  {"error": "Transacción revertida por fallo en nodo distribuido"}`
+        }
+      ]
+    };
+
+    function renderP5() {
+      const steps = p5Data[p5Scenario];
+      const stepObj = steps[p5Step];
+
+      // Botones escenario
+      const btnOk = document.getElementById('btn-scen-ok');
+      const btnFail = document.getElementById('btn-scen-fail');
+      if (p5Scenario === 'ok') {
+        btnOk.className = "flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-all bg-emerald-600 text-white shadow";
+        btnFail.className = "flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-all text-slate-400 hover:text-white";
+      } else {
+        btnFail.className = "flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-all bg-rose-600 text-white shadow";
+        btnOk.className = "flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-all text-slate-400 hover:text-white";
+      }
+
+      document.getElementById('p5-step-badge').textContent = `${p5Step + 1} / 5`;
+      document.getElementById('p5-next-btn-text').textContent = p5Step < 4 ? `Siguiente Paso (${p5Step + 1}/5)` : `Reiniciar Simulación`;
+      document.getElementById('p5-step-tag').textContent = `ETAPA ${p5Step + 1} DE 5`;
+      document.getElementById('p5-layer-name').textContent = stepObj.layer;
+      document.getElementById('p5-lock-indicator').textContent = stepObj.lockStatus;
+      document.getElementById('p5-step-title').textContent = stepObj.title;
+      document.getElementById('p5-step-desc').textContent = stepObj.desc;
+      document.getElementById('p5-step-impact').textContent = stepObj.impact;
+      document.getElementById('p5-code-box').textContent = stepObj.code;
+
+      // Stepper bars P5
+      const stepperHtml = steps.map((s, idx) => {
+        const active = idx === p5Step;
+        const passed = idx < p5Step;
+        const isFailStep = p5Scenario === 'fail' && idx >= 2;
+        return `
+          <button onclick="goToP5Step(${idx})" class="text-left p-2.5 rounded-xl border transition-all ${
+            active 
+              ? (isFailStep ? 'bg-rose-600/20 border-rose-500 text-white shadow' : 'bg-blue-600/20 border-blue-500 text-white shadow')
+              : passed 
+                ? 'bg-slate-900 border-blue-500/40 text-blue-300' 
+                : 'bg-slate-950 border-slate-800 text-slate-500 hover:text-slate-300'
+          }">
+            <div class="flex items-center justify-between text-[11px] font-mono">
+              <span>ETAPA ${idx + 1}</span>
+              <span>${active ? '● ACTIVA' : passed ? '✓' : ''}</span>
+            </div>
+            <div class="text-xs font-bold truncate mt-0.5">${s.short}</div>
+          </button>
+        `;
+      }).join('');
+      document.getElementById('p5-stepper-bars').innerHTML = stepperHtml;
+
+      // Renderizar Lienzo P5
+      const isFail = p5Scenario === 'fail';
+      const canvas = document.getElementById('p5-canvas');
+      canvas.innerHTML = `
+        <div class="flex flex-col items-center space-y-4">
+          
+          <!-- CAPA 1: MIDDLEWARE -->
+          <div class="w-full max-w-lg p-3.5 rounded-xl border transition-all ${p5Step === 0 || p5Step === 1 || p5Step === 4 ? 'bg-emerald-950/80 border-emerald-400 glow-emerald' : 'bg-slate-900/70 border-slate-800 opacity-65'}">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-mono font-bold text-emerald-300">CAPA SISTEMA DE INFORMACIÓN: MIDDLEWARE / BACKEND API</span>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-950 text-slate-300">
+                ${p5Step === 0 ? 'Validando JWT + Reglas' : p5Step === 1 ? 'Delegando TX a BD' : p5Step === 4 ? (isFail ? 'HTTP 503 Error' : 'HTTP 200 OK') : 'Esperando SGBD...'}
+              </span>
+            </div>
+            <div class="text-xs text-slate-300 mt-1">
+              Orquesta lógica de negocio antes de comprometer recursos transaccionales del SGBD.
+            </div>
+          </div>
+
+          <div class="h-4 w-0.5 ${p5Step >= 1 ? 'bg-blue-400' : 'bg-slate-700'}"></div>
+
+          <!-- CAPA 2: COORDINADOR 2PC -->
+          <div class="w-full max-w-md p-3.5 rounded-xl border transition-all ${p5Step >= 1 ? 'bg-blue-950/90 border-blue-400 glow-blue' : 'bg-slate-900/70 border-slate-800 opacity-60'}">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-mono font-bold text-blue-300">MOTOR SGBD: NODO COORDINADOR (2PC)</span>
+              <span class="text-[10px] font-mono text-amber-300">
+                ${p5Step === 2 ? 'Fase 1: PREPARE' : p5Step === 3 ? (isFail ? 'Timeout Detectado!' : 'Votos YES Recibidos') : p5Step === 4 ? (isFail ? 'Fase 2: GLOBAL_ABORT' : 'Fase 2: GLOBAL_COMMIT') : 'Listo'}
+              </span>
+            </div>
+          </div>
+
+          <!-- PARTICIPANTES 2PC -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full pt-2">
+            
+            <!-- Nodo Quito (Siempre Sano, sufre el bloqueo si GYE falla) -->
+            <div class="p-4 rounded-xl border transition-all ${
+              p5Step === 2 ? 'bg-amber-950/80 border-amber-400 glow-amber' :
+              p5Step === 3 && isFail ? 'bg-amber-950/90 border-amber-400 glow-amber animate-pulse-fast' :
+              p5Step >= 3 && !isFail ? 'bg-emerald-950/80 border-emerald-400 glow-emerald' :
+              p5Step === 4 && isFail ? 'bg-slate-900 border-rose-400' : 'bg-slate-900/60 border-slate-800 opacity-65'
+            }">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-mono font-bold text-white">NODO 1: QUITO (SANO)</span>
+                <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-950 ${p5Step >= 2 && p5Step <= 3 ? 'text-amber-300 border border-amber-500/40' : 'text-slate-400'}">
+                  ${p5Step < 2 ? 'Sin Locks' : p5Step === 2 ? '🔒 X-LOCK + Voto YES' : p5Step === 3 ? (isFail ? '🔒 BLOQUEADO (In-Doubt)' : '🔒 PREPARED (YES)') : (isFail ? '↺ Undo Log Aplicado' : '✓ Commit & Unlock')}
+                </span>
+              </div>
+              <p class="text-xs text-slate-300 mt-2">
+                ${p5Step === 3 && isFail ? '⚠️ Retiene X-Locks esperando decisión del Coordinador. Usuarios de Quito en espera.' : 'Participante 2PC con registro WAL local.'}
+              </p>
+            </div>
+
+            <!-- Nodo Guayaquil (Sano en OK, Falla en FAIL) -->
+            <div class="p-4 rounded-xl border transition-all ${
+              p5Step >= 2 && isFail ? 'bg-rose-950/90 border-rose-500 glow-rose' :
+              p5Step === 2 && !isFail ? 'bg-amber-950/80 border-amber-400 glow-amber' :
+              p5Step >= 3 && !isFail ? 'bg-emerald-950/80 border-emerald-400 glow-emerald' : 'bg-slate-900/60 border-slate-800 opacity-65'
+            }">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-mono font-bold text-white">NODO 2: GUAYAQUIL</span>
+                <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-950 ${p5Step >= 2 && isFail ? 'text-rose-400 border border-rose-500/40' : 'text-slate-400'}">
+                  ${p5Step < 2 ? 'Sin Locks' : isFail ? '❌ FALLO EN PREPARE' : p5Step === 2 ? '🔒 X-LOCK + Voto YES' : p5Step === 3 ? '🔒 PREPARED (YES)' : '✓ Commit & Unlock'}
+                </span>
+              </div>
+              <p class="text-xs text-slate-300 mt-2">
+                ${p5Step >= 2 && isFail ? '⚡ Sitio caído o sin respuesta durante la Fase 1. Impide el consenso unánime.' : 'Participante 2PC con registro WAL local.'}
+              </p>
+            </div>
+
+          </div>
+
+        </div>
+      `;
+    }
+
+    function setP5Scenario(scen) {
+      p5Scenario = scen;
+      p5Step = 0;
+      renderP5();
+    }
+
+    function nextP5Step() {
+      p5Step = (p5Step + 1) % 5;
+      renderP5();
+    }
+
+    function goToP5Step(idx) {
+      p5Step = idx;
+      renderP5();
+    }
+
+    // --- QUIZ INTERACTIVO ---
+    const quizQuestions = [
+      {
+        q: "1. ¿Cuál es la diferencia fundamental entre la transparencia de un SGBDD homogéneo y la interoperabilidad mediante APIs en un Sistema de Información?",
+        options: [
+          "El SGBDD oculta la fragmentación y ubicación mediante un esquema global en el motor de BD, mientras que las APIs coordinan servicios autónomos explícitamente en la capa de aplicación.",
+          "Las APIs web requieren que todos los nodos usen el mismo motor relacional, mientras que el SGBDD no usa red.",
+          "No existe diferencia; ambos usan el optimizador SQL para unir fragmentos remotos."
+        ],
+        correct: 0,
+        explanation: "Exacto: en el SGBDD el propio motor resuelve la fragmentación de forma transparente usando su catálogo global; en el Sistema de Información, el servidor de aplicaciones orquesta contratos HTTP/JSON entre servicios heterogéneos."
+      },
+      {
+        q: "2. ¿Por qué es vital que el Middleware valide las reglas de negocio ANTES de delegar la transacción al motor de base de datos distribuida?",
+        options: [
+          "Para evitar adquirir bloqueos exclusivos (X-Locks) y abrir transacciones 2PC costosas cuando una petición tiene errores de permisos o de lógica de negocio.",
+          "Porque el motor de base de datos no soporta claves primarias ni foráneas.",
+          "Para desactivar el registro WAL del servidor."
+        ],
+        correct: 0,
+        explanation: "Correcto: los bloqueos en transacciones distribuidas son el cuello de botella más costoso. Filtrar en el Middleware protege la concurrencia del SGBD."
+      },
+      {
+        q: "3. Si un nodo participante falla durante la fase PREPARE del protocolo 2PC, ¿qué impacto operacional ocurre en los demás nodos que sí votaron YES?",
+        options: [
+          "Los nodos sanos hacen Commit inmediatamente por su cuenta sin esperar al Coordinador.",
+          "Los nodos sanos mantienen retenidos sus bloqueos exclusivos (X-Locks) en estado In-Doubt hasta que el Coordinador decrete el Rollback Global, bloqueando a otros usuarios.",
+          "Se borran todas las tablas del esquema global."
+        ],
+        correct: 1,
+        explanation: "Así es: 2PC es un protocolo bloqueante. Los nodos que ya votaron YES no pueden liberar sus X-Locks hasta recibir la orden GLOBAL_ABORT del Coordinador."
+      }
+    ];
+
+    function renderQuiz() {
+      const container = document.getElementById('quiz-container');
+      container.innerHTML = quizQuestions.map((item, qIdx) => `
+        <div class="bg-slate-950 p-5 rounded-xl border border-slate-800 space-y-3">
+          <p class="text-sm font-bold text-white leading-snug">${item.q}</p>
+          <div class="space-y-2">
+            ${item.options.map((opt, oIdx) => `
+              <button onclick="answerQuiz(${qIdx}, ${oIdx})" id="q-${qIdx}-opt-${oIdx}" class="w-full text-left p-3 rounded-lg border border-slate-800 bg-slate-900/70 hover:bg-slate-800 text-xs sm:text-sm text-slate-300 transition-all">
+                ${opt}
+              </button>
+            `).join('')}
+          </div>
+          <div id="q-exp-${qIdx}" class="hidden p-3 rounded-lg text-xs leading-relaxed"></div>
+        </div>
+      `).join('');
+    }
+
+    function answerQuiz(qIdx, oIdx) {
+      const item = quizQuestions[qIdx];
+      const expBox = document.getElementById(`q-exp-${qIdx}`);
+      item.options.forEach((_, idx) => {
+        const btn = document.getElementById(`q-${qIdx}-opt-${idx}`);
+        btn.disabled = true;
+        if (idx === item.correct) {
+          btn.className = "w-full text-left p-3 rounded-lg border border-emerald-500 bg-emerald-950/60 text-xs sm:text-sm text-emerald-200 font-semibold";
+        } else if (idx === oIdx) {
+          btn.className = "w-full text-left p-3 rounded-lg border border-rose-500 bg-rose-950/60 text-xs sm:text-sm text-rose-200";
+        }
+      });
+      expBox.classList.remove('hidden');
+      if (oIdx === item.correct) {
+        expBox.className = "p-3 rounded-lg text-xs leading-relaxed bg-emerald-500/10 border border-emerald-500/30 text-emerald-300";
+        expBox.innerHTML = `<strong>✓ ¡Respuesta Correcta!</strong> ${item.explanation}`;
+      } else {
+        expBox.className = "p-3 rounded-lg text-xs leading-relaxed bg-rose-500/10 border border-rose-500/30 text-rose-300";
+        expBox.innerHTML = `<strong>✗ Revisión Técnica:</strong> ${item.explanation}`;
+      }
+    }
+
+    function resetQuiz() {
+      renderQuiz();
+    }
+
+    // --- CAMBIO DE PESTAÑAS ---
+    function switchTab(tabId) {
+      ['p4', 'p5', 'quiz'].forEach(id => {
+        document.getElementById(`tab-${id}`).classList.add('hidden');
+        const btn = document.getElementById(`tab-btn-${id}`);
+        btn.className = "tab-btn flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all text-slate-400 hover:text-white hover:bg-slate-800/60";
+      });
+      document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+      document.getElementById(`tab-btn-${tabId}`).className = "tab-btn flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all bg-blue-600 text-white shadow-md";
+    }
+
+    // Inicializar al cargar
+    window.addEventListener('DOMContentLoaded', () => {
+      renderP4();
+      renderP5();
+      renderQuiz();
+      if (window.lucide) {
+        lucide.createIcons();
+      }
+    });
+  </script>
+</body>
+</html>
